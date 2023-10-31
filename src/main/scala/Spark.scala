@@ -1,7 +1,6 @@
 package org.example
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 object Spark {
@@ -19,7 +18,7 @@ object Spark {
 
     val sc = new SparkContext( conf)
 
-    val input = sc.textFile("data.txt")
+    val input = sc.textFile("data2.txt")
 
     val parsedData = input
       .map(s => s.split(" ")
@@ -32,48 +31,37 @@ object Spark {
       .groupByKey()
 
     // ----------- Task 1 ----------
-    task1BruteForce(pairs)
+    Task1.task1BruteForce(pairs)
 
-    task1DivideConquer(pairs)
+//    task1DivideConquer(parsedData, parsedData.first().size)
   }
 
-  def task1DivideConquer(pairs: RDD[(List[Double], Iterable[List[Double]])]): Unit = {
-
-  }
-
-
-  def task1BruteForce(pairs: RDD[(List[Double], Iterable[List[Double]])]) = {
-    val answer = pairs
-      .filter(pair => this.isSkyline(pair._1, pair._2))
-      .map(pair => pair._1)
-
-    answer.collect.foreach(arr => println(arr))
-  }
-
-  def isSkyline(key: List[Double], values: Iterable[List[Double]]): Boolean = {
-    var isNotDominated = true
-
-    values.foreach(nums => {
-      if(isDominated(key, nums)) {
-        isNotDominated = false
-      }
-    })
-
-    isNotDominated
-  }
-
-  def isDominated(num1: List[Double], num2: List[Double]): Boolean = {
-    var isDominated = 0
-    for( i <- num1.indices) {
-      if(num2.apply(i) <= num1.apply(i)) {
-        isDominated += 1
-      }
-    }
-    if(isDominated == num1.size) {
-      return true
-    }
-
-    false
-  }
+//  def task1DivideConquer(points: RDD[List[Double]], dimensions: Int): RDD[List[Double]] = {
+//
+//    if(points.count() == 1) return points
+//    var pivot = points
+//      .map(x => x.head)
+//      .mean()
+//
+//    var p1 = points
+//      .filter(x => x.head < pivot)
+//
+//    var p2 = points
+//      .filter(x => x.head >= pivot)
+//
+//    var s1 = task1DivideConquer(p1, dimensions)
+//    var s2 = task1DivideConquer(p2, dimensions)
+//
+//    return mergeBasic(s1, s2, dimensions)
+//  }
+//
+//  def mergeBasic(s1: RDD[List[Double]], s2: RDD[List[Double]], dimensions: Int): RDD[List[Double]] = {
+//
+//    if(s1){
+//
+//    } else if()
+//
+//    return result
+//  }
 
 }
