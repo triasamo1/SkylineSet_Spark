@@ -4,18 +4,32 @@ import org.apache.spark.rdd.RDD
 
 object Task1 {
 
-  def task1BruteForce(pairs: RDD[(List[Double], Iterable[List[Double]])]) = {
-    val start = System.currentTimeMillis()
-    val answer = pairs
-      .filter(pair => this.isSkyline(pair._1, pair._2))
+  def blockNestedLoops(data: RDD[List[Double]]) = {
+
+  }
+
+  def task1BruteForce(data: RDD[List[Double]]) = {
+//    val data2 = data.collect()
+//    val temp = data
+//      .filter(point1 => isSkyline(point1, data2.filter(point2 => point1 != point2)))
+//
+//    temp
+
+
+    val answer = data.cartesian(data)
+      .filter(pair => pair._1 != pair._2)
+      .groupByKey()
+      .filter(pair => isSkyline(pair._1, pair._2))
       .map(pair => pair._1)
 
-    val end = System.currentTimeMillis()
+    answer
+  }
 
-    println("-- Task 1 --")
-    println("Total time = " + (end - start) + "ms")
-    println("Total skyline points = " + answer.count())
-    answer.collect.foreach(arr => println(arr))
+  def isSkyline(key: List[Double], values: RDD[List[Double]]): Boolean = {
+    values.foreach(nums => {
+      if(isDominated(key, nums)) return false
+    })
+    true
   }
 
   def isSkyline(key: List[Double], values: Iterable[List[Double]]): Boolean = {

@@ -1,6 +1,7 @@
 package org.example
 
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 object Spark {
@@ -18,7 +19,7 @@ object Spark {
 
     val sc = new SparkContext( conf)
 
-    val input = sc.textFile("data2.txt")
+    val input = sc.textFile("data3.txt")
 
     val parsedData = input
       .map(s => s.split(" ")
@@ -26,42 +27,36 @@ object Spark {
         .map(_.toDouble)
         .toList)
 
-    val pairs = parsedData.cartesian(parsedData)
-      .filter(pair => pair._1 != pair._2)
-      .groupByKey()
-
     // ----------- Task 1 ----------
-    Task1.task1BruteForce(pairs)
 
-//    task1DivideConquer(parsedData, parsedData.first().size)
+    runTask(() => Task1.task1BruteForce(parsedData), "Task 1")
+
+    runTask2(() => Task2.task2BruteForce(parsedData, 3), "Task 2")
   }
 
-//  def task1DivideConquer(points: RDD[List[Double]], dimensions: Int): RDD[List[Double]] = {
-//
-//    if(points.count() == 1) return points
-//    var pivot = points
-//      .map(x => x.head)
-//      .mean()
-//
-//    var p1 = points
-//      .filter(x => x.head < pivot)
-//
-//    var p2 = points
-//      .filter(x => x.head >= pivot)
-//
-//    var s1 = task1DivideConquer(p1, dimensions)
-//    var s2 = task1DivideConquer(p2, dimensions)
-//
-//    return mergeBasic(s1, s2, dimensions)
-//  }
-//
-//  def mergeBasic(s1: RDD[List[Double]], s2: RDD[List[Double]], dimensions: Int): RDD[List[Double]] = {
-//
-//    if(s1){
-//
-//    } else if()
-//
-//    return result
-//  }
+  def runTask2(function: () => Array[Tuple2[List[Double], Long]], taskNumber: String): Unit = {
+    val start = System.currentTimeMillis()
 
+    val answer = function.apply()
+
+    val end = System.currentTimeMillis()
+
+    println("-- " +  taskNumber + " --")
+    println("Total time = " + (end - start) + "ms")
+    println("Total skyline points = " + answer.length)
+    answer.foreach(arr => println(arr))
+  }
+
+  def runTask(function: () => RDD[List[Double]], taskNumber: String): Unit = {
+    val start = System.currentTimeMillis()
+
+    val answer = function.apply()
+
+    val end = System.currentTimeMillis()
+
+    println("-- " +  taskNumber + " --")
+    println("Total time = " + (end - start) + "ms")
+    println("Total skyline points = " + answer.count())
+    answer.collect.foreach(arr => println(arr))
+  }
 }
