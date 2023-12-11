@@ -29,9 +29,11 @@ object Spark {
 
     // ----------- Task 1 ----------
 
-    runTask(() => Task1.task1BruteForce(parsedData), "Task 1")
+//    runTask(() => Task1.task1BruteForce(parsedData), "Task 1")
+//    runTask(() => sc.parallelize(Task1.sfs(parsedData)), "Task 1")
 
     runTask2(() => Task2.task2BruteForce(parsedData, 3), "Task 2")
+    runTask2(() => Task2.STD(parsedData, 3, sc), "Task 2")
   }
 
   def runTask2(function: () => Array[Tuple2[List[Double], Long]], taskNumber: String): Unit = {
