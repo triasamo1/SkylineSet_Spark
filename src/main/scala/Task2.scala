@@ -30,42 +30,22 @@ object Task2 {
   }
 
   def STD(data: RDD[List[Double]], top: Int,  sc: SparkContext) = {
-    if(top == 0)  RDD
+    if(top == 0) Array()
 
-    val skylines = Task1.sfs(data)
+    val skylines = Task1.sfs(data) //find skyline points
+
     val skylinePoints = skylines
-      .map(point => Tuple2(point, countDominatedPoints2(point, data.collect())))
-      .sortWith(_._2 > _._2)
-//      .sortBy(_._2, ascending = false)
+      .map(point => Tuple2(point, countDominatedPoints2(point, data.collect()))) //for every skyline point calculate its dominance score
+      .sortWith(_._2 > _._2) //sort them based on their dominance score
 
 
     val point = skylinePoints.apply(0)
-    var result = Array(point)
+    val result = Array(point) //add the point with the max dominance score to the result array
     skylinePoints.remove(0)
 
     val answer = helper2(top - 1, point._1, data.filter(p => !p.equals(point)).collect(), result, skylinePoints)
 
-
-
     answer
-//    data
-//      .filter(p => !result.map(_._1).contains(p))
-//      .filter(p => isInRegion(point._1, p, skylinePoints))
-//      .map(p => Tuple2(p, countDominatedPoints(p, data)))
-
-
-//    val point = skylinePoints.first()
-//    result :+ point
-
-//    helper(top, point._1, data.filter(p => !p.equals(point)), result, skylinePoints)
-
-//    print(result)
-//
-//    result
-//    data
-//      .filter(p => !result.map(_._1).contains(p))
-//      .filter(p => isInRegion(point._1, p, skylinePoints))
-//      .map(p => Tuple2(p, countDominatedPoints(p, data)))
   }
 
   //TODO rename toCalculatePoints
@@ -74,21 +54,20 @@ object Task2 {
     if(topK == 0)  return result
 
     var res = result
-    val data2 = data
-      .filter(p => !p.equals(point))
-      .filter(p => !toCalculatePoints.map(_._1).contains(p))
 
-    var temp = data2
-      .filter(p => isInRegion2(point, p, toCalculatePoints))
-      .map(p => Tuple2(p, countDominatedPoints2(p, data)))
-      .foreach(p => toCalculatePoints.append(p))
+    data
+      .filter(p => !p.equals(point)) //filter the current point
+      .filter(p => !toCalculatePoints.map(_._1).contains(p)) //filter the point if it's already in toCalculatePoints array
+      .filter(p => isInRegion2(point, p, toCalculatePoints)) //get only the points belonging to region of current point
+      .map(p => Tuple2(p, countDominatedPoints2(p, data))) //count the dominated points for each
+      .foreach(p => toCalculatePoints.append(p)) //add every point toCalculatePoints array
 
     //Add points belonging only to region of point to the toCalculatePoints RDD
     val newCalculatePoints = toCalculatePoints
-      .sortWith(_._2 > _._2)
+      .sortWith(_._2 > _._2) //sort points based on their dominance score
 
     val pointToAdd = toCalculatePoints.apply(0)
-    res :+= pointToAdd
+    res :+= pointToAdd //add first point(the one with the maximum score) to the result array
 
     newCalculatePoints.remove(0)
     helper2(topK - 1, pointToAdd._1, data.filter(p => !p.equals(pointToAdd)), res, newCalculatePoints)
@@ -121,7 +100,7 @@ object Task2 {
 //      .count()
     var totalPoints = 0
     points
-      .filter(p => !p.equals(point))
+//      .filter(p => !p.equals(point))
       .foreach(nums => {
         if(Task1.dominates(point, nums)) totalPoints += 1
       })
