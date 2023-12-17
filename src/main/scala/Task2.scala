@@ -9,14 +9,12 @@ import scala.collection.mutable.ArrayBuffer
 object Task2 {
 
   def task2BruteForce(data: RDD[List[Double]], top: Int) = {
-    val answer = data.cartesian(data)
+    data.cartesian(data)
       .filter(pair => pair._1 != pair._2)
       .groupByKey()
       .map(pair => (pair._1, countDominatedPoints(pair._1, pair._2)))
       .sortBy(_._2) //sort map by value in descending order
       .top(top)(Ordering[Long].on(_._2))
-
-    answer
   }
 
   def countDominatedPoints(key: List[Double], values: Iterable[List[Double]]): Long = {
@@ -29,6 +27,7 @@ object Task2 {
     totalPoints
   }
 
+  //TODO remove sc if not needed
   def STD(data: RDD[List[Double]], top: Int,  sc: SparkContext) = {
     if(top == 0) Array()
 
@@ -77,21 +76,18 @@ object Task2 {
   //Finds if pointB is in the region of pointA
   def isInRegion2(pointA: List[Double], pointB: List[Double], skylines: ArrayBuffer[(List[Double], Long)]): Boolean = {
     skylines
-      .map(_._1)
-      .filter(p => !p.equals(pointB))
-      .map(point => !Task1.dominates(point, pointB))
+      .map(_._1) //get the points, without their dominance score
+//      .filter(p => Task1.dominates(pointA, p)) //get only the points that pointA dominates
+      .filter(p => !p.equals(pointA))  //get the points that are not equal to pointA
+      .map(point => !Task1.dominates(point, pointB)) //map to false or true depending if pointB is not dominated by point
       .reduce(_&&_)
   }
 
 
   def countDominatedPoints2(point: List[Double], points: Array[List[Double]]) : Long = {
-    var totalPoints = 0
     points
       .filter(p => !p.equals(point))
-      .foreach(nums => {
-        if(Task1.dominates(point, nums)) totalPoints += 1
-      })
-    totalPoints
+      .count(p => Task1.dominates(point, p))
   }
 
   def countDominatedPoints(point: List[Double], points: RDD[List[Double]]) : Long = {

@@ -34,6 +34,7 @@ object Spark {
 
     runTask2(() => Task2.task2BruteForce(parsedData, 3), "Task 2")
     runTask2(() => Task2.STD(parsedData, 3, sc), "Task 2")
+    runTask2(() => Task3.task3BruteForce(parsedData, 3), "task 3")
   }
 
   def runTask2(function: () => Array[Tuple2[List[Double], Long]], taskNumber: String): Unit = {
