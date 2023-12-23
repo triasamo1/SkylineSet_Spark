@@ -4,6 +4,8 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
+import scala.collection.mutable.ArrayBuffer
+
 object Spark {
 
 
@@ -35,6 +37,21 @@ object Spark {
     runTask2(() => Task2.task2BruteForce(parsedData, 3), "Task 2")
     runTask2(() => Task2.STD(parsedData, 3, sc), "Task 2")
     runTask2(() => Task3.task3BruteForce(parsedData, 3), "task 3")
+
+    runTask3(() => Task3.task3(parsedData, 3), "task 3")
+  }
+
+  def runTask3(function: () => ArrayBuffer[(List[Double], Long)], taskNumber: String): Unit = {
+    val start = System.currentTimeMillis()
+
+    val answer = function.apply()
+
+    val end = System.currentTimeMillis()
+
+    println("-- " +  taskNumber + " --")
+    println("Total time = " + (end - start) + "ms")
+    println("Total skyline points = " + answer.length)
+    answer.foreach(arr => println(arr))
   }
 
   def runTask2(function: () => Array[Tuple2[List[Double], Long]], taskNumber: String): Unit = {

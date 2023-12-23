@@ -57,6 +57,7 @@ object Task2 {
     data
       .filter(p => !p.equals(point)) //filter the current point
       .filter(p => !toCalculatePoints.map(_._1).contains(p)) //filter the point if it's already in toCalculatePoints array
+      .filter(p => Task1.dominates(point, p)) //get only the points that are dominated by 'point'
       .filter(p => isInRegion2(point, p, toCalculatePoints)) //get only the points belonging to region of current point
       .map(p => Tuple2(p, countDominatedPoints2(p, data))) //count the dominated points for each
       .foreach(p => toCalculatePoints.append(p)) //add every point toCalculatePoints array
@@ -74,6 +75,7 @@ object Task2 {
   }
 
   //Finds if pointB is in the region of pointA
+  // TODO should be dominated by pointA
   def isInRegion2(pointA: List[Double], pointB: List[Double], skylines: ArrayBuffer[(List[Double], Long)]): Boolean = {
     skylines
       .map(_._1) //get the points, without their dominance score
@@ -83,6 +85,11 @@ object Task2 {
       .reduce(_&&_)
   }
 
+  def countDominatedPoints3(point: List[Double], points: Iterable[List[Double]]): Long = {
+    points
+      .filter(p => !p.equals(point))
+      .count(p => Task1.dominates(point, p))
+  }
 
   def countDominatedPoints2(point: List[Double], points: Array[List[Double]]) : Long = {
     points
