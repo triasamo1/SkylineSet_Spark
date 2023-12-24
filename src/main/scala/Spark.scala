@@ -36,9 +36,10 @@ object Spark {
 
     runTask2(() => Task2.task2BruteForce(parsedData, 3), "Task 2")
     runTask2(() => Task2.STD(parsedData, 3, sc), "Task 2")
-    runTask2(() => Task3.task3BruteForce(parsedData, 3), "task 3")
 
     runTask3(() => Task3.task3(parsedData, 3), "task 3")
+    runTask2(() => Task3.task33(parsedData, 3, sc), "task 3")
+    runTask2(() => Task3.task32(parsedData, 3, sc), "task 3")
   }
 
   def runTask3(function: () => ArrayBuffer[(List[Double], Long)], taskNumber: String): Unit = {

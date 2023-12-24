@@ -138,7 +138,4 @@ object Task2 {
       .reduce(_&&_)
   }
 
-
-
-
 }
