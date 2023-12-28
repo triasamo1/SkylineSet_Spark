@@ -16,8 +16,60 @@ object Task1 {
     sum
   }
 
+  def ALS2(data: RDD[List[Double]]): ArrayBuffer[List[Double]] = {
+    val localSkylines = data.mapPartitions(sfsForALS) //calculate the local skyline points in each partition
+    val globalSkyline = sfs(localSkylines) // calculate the global skyline points
+    globalSkyline
+  }
+
+  def ALS(data: RDD[List[Double]]): Iterator[List[Double]] = {
+
+    val localSkylines = data.mapPartitions(sfsForALS) //calculate the local skyline points in each partition
+    val globalSkyline = sfsForALS(localSkylines.collect().toIterator) // calculate the global skyline points
+    globalSkyline
+  }
+
+  def sfsForALS(data: Iterator[List[Double]]): Iterator[List[Double]] = {
+    //First sort points based on distance from 0,0,0,0
+    val dataList = data
+      .toList
+      .map(point => Tuple2(point, distanceFromStart(point)))
+      .sortBy(_._2)
+
+    val skylineResult = ArrayBuffer[List[Double]]()
+
+    skylineResult += dataList.head._1 //add the first element to the skyline result
+
+    var i = 1
+    while (i < dataList.length) {
+      val p1 = dataList.apply(i)._1
+      var flag = true
+      var j = 0
+      breakable {
+        while (j < skylineResult.length) { //check p1 with every element on the skyline result
+          val p2 = skylineResult.apply(j)
+          //if p1 dominates p2 then add the p1 to the skyline result and remove p2 from the result
+          if (dominates(p1, p2)) {
+            skylineResult.remove(j)
+            j -= 1
+          }
+          //if p2 (which is already in the skyline result) dominated p1 then stop the loop
+          if (dominates(p2, p1)) {
+            flag = false
+            break()
+          }
+          j += 1
+        }
+        if (flag) skylineResult += p1
+      }
+      i += 1
+    }
+
+    skylineResult.toIterator
+  }
+
+
   def sfs(data: RDD[List[Double]]) = {
-    //    val rdd2: RDD[List[Double]] = datasetRDD.repartition(num_of_partitions).mapPartitions(addScoreAndCalculate)
     //First sort points based on distance from 0,0,0,0
     val dataList = data
       .map(point => Tuple2(point, distanceFromStart(point)))
@@ -28,7 +80,8 @@ object Task1 {
 
     skyline +=  dataList.apply(0)._1
 
-    for(i <- 1 until dataList.length) {
+    var i = 1
+    while (i < dataList.length) {
       val p1 = dataList.apply(i)._1
       var toBeAdded = true
       var j = 0
@@ -47,6 +100,7 @@ object Task1 {
         }
         if(toBeAdded) skyline += p1
       }
+      i += 1
     }
     skyline
 
@@ -62,17 +116,10 @@ object Task1 {
     answer
   }
 
-  def isSkyline(key: List[Double], values: RDD[List[Double]]): Boolean = {
-    values.foreach(nums => {
-      if(isDominated(key, nums)) return false
-    })
-    true
-  }
-
   // Checks if pointA dominates pointB
   def dominates(pointA: List[Double], pointB: List[Double]): Boolean = {
     var dominates = false
-    breakable{
+    breakable {
       for (i <- pointA.indices) {
         val p1 = pointA.apply(i)
         val p2 = pointB.apply(i)
