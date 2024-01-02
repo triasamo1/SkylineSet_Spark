@@ -7,19 +7,13 @@ import scala.util.control.Breaks.{break, breakable}
 
 object Task1 {
 
-  def distanceFromStart(point: List[Double]) = {
+  def distanceFromStart(point: List[Double]): Double = {
     var sum = 0.0
     point.foreach(value => {
       sum += (value - 0).abs
     })
 
     sum
-  }
-
-  def ALS2(data: RDD[List[Double]]): ArrayBuffer[List[Double]] = {
-    val localSkylines = data.mapPartitions(sfsForALS) //calculate the local skyline points in each partition
-    val globalSkyline = sfs(localSkylines) // calculate the global skyline points
-    globalSkyline
   }
 
   def ALS(data: RDD[List[Double]]): Iterator[List[Double]] = {
@@ -69,7 +63,7 @@ object Task1 {
   }
 
 
-  def sfs(data: RDD[List[Double]]) = {
+  def sfs(data: RDD[List[Double]]): ArrayBuffer[List[Double]] = {
     //First sort points based on distance from 0,0,0,0
     val dataList = data
       .map(point => Tuple2(point, distanceFromStart(point)))
@@ -91,10 +85,10 @@ object Task1 {
           if(dominates(p1, p2)) {
             skyline.remove(j)
             j -= 1
-          } else if (dominates(p2, p1)) {
+          }
+          if (dominates(p2, p1)) {
             toBeAdded = false
             break()
-
           }
           j += 1
         }
@@ -106,7 +100,7 @@ object Task1 {
 
   }
 
-  def task1BruteForce(data: RDD[List[Double]]) = {
+  def task1BruteForce(data: RDD[List[Double]]): RDD[List[Double]] = {
     val answer = data.cartesian(data)
       .filter(pair => pair._1 != pair._2)
       .groupByKey()
@@ -151,7 +145,6 @@ object Task1 {
     if(isDominated == num1.size) {
       return true
     }
-
     false
   }
 }

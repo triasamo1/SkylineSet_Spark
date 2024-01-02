@@ -29,80 +29,29 @@ object Spark {
         .map(_.toDouble)
         .toList)
 
+    val dimensions = parsedData.first().length
+    val totalPoints = parsedData.count()
+
+
     // ----------- Task 1 ----------
+    RunHelper.runTask(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.sfs(parsedData), 11)
+    RunHelper.runTask3(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.ALS(parsedData), 1)
 
-//    runTask(() => Task1.task1BruteForce(parsedData), "Task 1")
-    runTask(() => sc.parallelize(Task1.sfs(parsedData)), "Task 1")
+    // ----------- Task 2 ----------
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task2.STDWithRec2(parsedData, 3, sc), 22)
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task2.STDWithRec(parsedData, 3, sc), 22)
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task2.topPoints(parsedData, 3, sc), 2)
 
-//    runTask2(() => Task2.task2BruteForce(parsedData, 3), "Task 2")
-    runTask2(() => Task2.STD(parsedData, 3, sc), "Task 2 - With collect")
-    runTask2(() => Task2.STD2(parsedData, 3, sc), "Task 2 - Without collect")
+    // ----------- Task 3 ----------
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task3.topKSkylineBruteForce(parsedData, 3), 333)
 
-    runTask2(() => Task3.task33(parsedData, 3, sc), "task 3")
-    runTask2(() => Task3.task3(parsedData, 3, sc), "task 3")
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task3.task3(parsedData, 3, sc), 333)
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task3.task33(parsedData, 3, sc), 33)
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task3.topKSkylinePoints(parsedData, 3, sc), 3)
   }
 
-  def runTask3(function: () => ArrayBuffer[(List[Double], Long)], taskNumber: String): Unit = {
-    val start = System.currentTimeMillis()
-
-    val answer = function.apply()
-
-    val end = System.currentTimeMillis()
-
-    println("-- " +  taskNumber + " --")
-    println("Total time = " + (end - start) + "ms")
-    println("Total skyline points = " + answer.length)
-    answer.foreach(arr => println(arr))
-  }
-
-  def runTask4(function: () => Iterator[List[Double]], taskNumber: String): Unit = {
-    val start = System.currentTimeMillis()
-
-    val answer = function.apply().toList
-
-    val end = System.currentTimeMillis()
-
-    println("-- " + taskNumber + " --")
-    println("Total time = " + (end - start) + "ms")
-    println("Total skyline points = " + answer.length)
-
-    writeToFile(answer)
-    answer.foreach(arr => println(arr))
-  }
-
-  def writeToFile(answer: List[List[Double]]) = {
-    val writer = new PrintWriter(new File("./results.txt"))
-
-    answer
-      .map(p => p.map(_.toString).mkString(", ") + "\n")
-      .foreach(p => writer.write(p))
-
-    writer.close()
-  }
-
-  def runTask2(function: () => Array[Tuple2[List[Double], Long]], taskNumber: String): Unit = {
-    val start = System.currentTimeMillis()
-
-    val answer = function.apply()
-
-    val end = System.currentTimeMillis()
-
-    println("-- " +  taskNumber + " --")
-    println("Total time = " + (end - start) + "ms")
-    println("Total skyline points = " + answer.length)
-    answer.foreach(arr => println(arr))
-  }
-
-  def runTask(function: () => RDD[List[Double]], taskNumber: String): Unit = {
-    val start = System.currentTimeMillis()
-
-    val answer = function.apply()
-
-    val end = System.currentTimeMillis()
-
-    println("-- " +  taskNumber + " --")
-    println("Total time = " + (end - start) + "ms")
-    println("Total skyline points = " + answer.count())
-    answer.collect.foreach(arr => println(arr))
+  def dimensionsTotalPointsText(dim: Int, totalPoints: Long): String = {
+    "\nDimensions = " + dim +
+      "\nTotal Points = " + totalPoints + "\n"
   }
 }
