@@ -6,6 +6,7 @@
 *.jpg
 *.png
 *~
+*Results.txt
 
 # sbt specific
 .settings/
