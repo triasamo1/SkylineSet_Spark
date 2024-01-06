@@ -14,10 +14,11 @@ object FileHelper {
     new PrintWriter(new File("results/" + path))
   }
 
-  def getStatsText(taskNumber: Int, duration: Long): String = {
+  def getStatsText(text: String, taskNumber: Int, duration: Long): String = {
     "--Solution File for Task " + taskNumber + " --\n" +
       "Total time to run = " + duration + "ms" +
-      getTextBasedOnTask(taskNumber) +
+      text +
+//      getTextBasedOnTask(taskNumber) + //TODO
       "---------------------------------------------------------\n"
   }
 
@@ -28,8 +29,7 @@ object FileHelper {
   def writeToFile(text: String, taskNumber: Int, duration: Long, answer: List[List[Double]], filePath: String): Unit = {
     val writer = getWriter(filePath)
 
-    writer.write(getStatsText(taskNumber, duration))
-    writer.write(text)
+    writer.write(getStatsText(text, taskNumber, duration))
     answer
       .map(p => p.map(_.toString).mkString(", ") + "\n")
       .foreach(p => writer.write(p))
@@ -39,8 +39,8 @@ object FileHelper {
   def writeToFile(text: String, taskNumber: Int, duration: Long, answer: Array[(List[Double], Long)], filePath: String): Unit = {
     val writer = getWriter(filePath)
 
-    writer.write(getStatsText(taskNumber, duration))
-    writer.write(text)
+    writer.write(getStatsText(text, taskNumber, duration))
+
     answer
       .map(_._1)  //TODD for 2
       .map(p => p.map(_.toString).mkString(", ") + "\n")
@@ -51,8 +51,8 @@ object FileHelper {
   def writeToFile2(text: String, taskNumber: Int, duration: Long, answer: List[(List[Double], Long)], filePath: String): Unit = {
     val writer = getWriter(filePath)
 
-    writer.write(getStatsText(taskNumber, duration))
-    writer.write(text)
+    writer.write(getStatsText(text, taskNumber, duration))
+
     answer
       .map(_._1) //TODD for 2
       .map(p => p.map(_.toString).mkString(", ") + "\n")
@@ -63,8 +63,8 @@ object FileHelper {
   def writeToFile2(text: String, taskNumber: Int, duration: Long, answer: ArrayBuffer[(List[Double], Long)], filePath: String): Unit = {
     val writer = getWriter(filePath)
 
-    writer.write(getStatsText(taskNumber, duration))
-    writer.write(text)
+    writer.write(getStatsText(text, taskNumber, duration))
+
     answer
       .map(_._1) //TODD for 2
       .map(p => p.map(_.toString).mkString(", ") + "\n")

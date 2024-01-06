@@ -10,15 +10,19 @@ object Spark {
 
     val conf = new SparkConf()
     conf.setMaster("local")
-    conf.setAppName("First App")
-    println("hello")
+    conf.setAppName("Skyline App")
 
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
     val sc = new SparkContext( conf)
 
-    val input = sc.textFile("data3.txt")
+    if (args.length == 0) {
+      println("You need to provide an input file")
+      System.exit(1)
+    }
+
+    val input = sc.textFile(args.apply(0))
 
     val parsedData = input
       .map(s => s.split(" ")
@@ -48,7 +52,7 @@ object Spark {
   }
 
   def dimensionsTotalPointsText(dim: Int, totalPoints: Long): String = {
-    "\nDimensions = " + dim +
+    "\nPoint's dimensions = " + dim +
       "\nTotal Points = " + totalPoints + "\n"
   }
 }
