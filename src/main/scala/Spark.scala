@@ -29,6 +29,7 @@ object Spark {
     val dimensions = parsedData.first().length
     val totalPoints = parsedData.count()
 
+    FileHelper.createDir("results")
 
     // ----------- Task 1 ----------
     RunHelper.runTask(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.SFS(parsedData), 11)
