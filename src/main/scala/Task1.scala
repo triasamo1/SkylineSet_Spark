@@ -7,6 +7,31 @@ import scala.util.control.Breaks.{break, breakable}
 
 object Task1 {
 
+  // --- Brute Force Solution---
+
+  /**
+   * Finds the skyline points using a brute force solution. First, we create a cartesian product for the input rdd with
+   * itself, then we remove the pairs that have the same elements as first and second. After that, we group the pairs
+   * based on the key and then using the function isSkyline, we find if the point is a skyline point or not.
+   * @param data input data
+   * @return rdd with skyline points
+   */
+  def skylinesBruteForce(data: RDD[List[Double]]): RDD[List[Double]] = {
+    val answer = data.cartesian(data)
+      .filter(pair => pair._1 != pair._2)
+      .groupByKey()
+      .filter(pair => isSkyline(pair._1, pair._2))
+      .map(pair => pair._1)
+
+    answer
+  }
+
+  // ------- ALS -------
+  /**
+   * Finds the manhattan distance of the point from the start (0,0,0,0...).
+   * @param point the point we want to find its distance
+   * @return the manhattan distance distance
+   */
   def distanceFromStart(point: List[Double]): Double = {
     var sum = 0.0
     point.foreach(value => {
@@ -16,13 +41,23 @@ object Task1 {
     sum
   }
 
+  /**
+   * Method to find the skyline points using the All Local Skylines method. First it finds the skylines points for each
+   * partition (local skylines), using the SFS algorithm and then using the local skylines finds the global skylines points.
+   * @param data input data
+   * @return an iterator with the skyline points
+   */
   def ALS(data: RDD[List[Double]]): Iterator[List[Double]] = {
-
     val localSkylines = data.mapPartitions(sfsForALS) //calculate the local skyline points in each partition
     val globalSkyline = sfsForALS(localSkylines.collect().toIterator) // calculate the global skyline points
     globalSkyline
   }
 
+  /**
+   * Implements the Sort-First Skyline (SFS) algorithm to find the skyline points.
+   * @param data input data
+   * @return skyline points
+   */
   def sfsForALS(data: Iterator[List[Double]]): Iterator[List[Double]] = {
     //First sort points based on distance from 0,0,0,0
     val dataList = data
@@ -37,7 +72,7 @@ object Task1 {
     var i = 1
     while (i < dataList.length) {
       val p1 = dataList.apply(i)._1
-      var flag = true
+      var flag = true //determines if a point should be added to the skyline result
       var j = 0
       breakable {
         while (j < skylineResult.length) { //check p1 with every element on the skyline result
@@ -47,14 +82,15 @@ object Task1 {
             skylineResult.remove(j)
             j -= 1
           }
-          //if p2 (which is already in the skyline result) dominated p1 then stop the loop
+          //if p2 (which is already in the skyline result) dominates p1 then stop the loop,
+          //since p1 is not a skyline point
           if (dominates(p2, p1)) {
             flag = false
             break()
           }
           j += 1
         }
-        if (flag) skylineResult += p1
+        if (flag) skylineResult += p1 //add point to skylineResult
       }
       i += 1
     }
@@ -63,7 +99,14 @@ object Task1 {
   }
 
 
-  def sfs(data: RDD[List[Double]]): ArrayBuffer[List[Double]] = {
+  // ---- SFS -----
+  /**
+   * Same function as above, but with different inputs.
+   * Implements the Sort-First Skyline (SFS) algorithm to find the skyline points.
+   * @param data input data
+   * @return skyline points
+   */
+  def SFS(data: RDD[List[Double]]): ArrayBuffer[List[Double]] = {
     //First sort points based on distance from 0,0,0,0
     val dataList = data
       .map(point => Tuple2(point, distanceFromStart(point)))
@@ -72,45 +115,43 @@ object Task1 {
 
     val skyline = ArrayBuffer[List[Double]]()
 
-    skyline +=  dataList.apply(0)._1
+    skyline +=  dataList.apply(0)._1 //add the first element to the skyline result
 
     var i = 1
-    while (i < dataList.length) {
+    while (i < dataList.length) { //check p1 with every element on the skyline result
       val p1 = dataList.apply(i)._1
-      var toBeAdded = true
+      var toBeAdded = true  //determines if a point should be added to the skyline result
       var j = 0
       breakable {
         while(j < skyline.length) {
           val p2 = skyline.apply(j)
+          //if p1 dominates p2 then add the p1 to the skyline result and remove p2 from the result
           if(dominates(p1, p2)) {
             skyline.remove(j)
             j -= 1
           }
+          //if p2 (which is already in the skyline result) dominates p1 then stop the loop,
+          //since p1 is not a skyline point
           if (dominates(p2, p1)) {
             toBeAdded = false
             break()
           }
           j += 1
         }
-        if(toBeAdded) skyline += p1
+        if(toBeAdded) skyline += p1 //add point to skylineResult
       }
       i += 1
     }
     skyline
-
   }
 
-  def task1BruteForce(data: RDD[List[Double]]): RDD[List[Double]] = {
-    val answer = data.cartesian(data)
-      .filter(pair => pair._1 != pair._2)
-      .groupByKey()
-      .filter(pair => isSkyline(pair._1, pair._2))
-      .map(pair => pair._1)
-
-    answer
-  }
-
-  // Checks if pointA dominates pointB
+  //----- Helper Functions -----
+  /**
+   * Checks if pointA dominates pointB
+   * @param pointA the first point point
+   * @param pointB the second point
+   * @return true if pointA dominated pointB, otherwise it returns false
+   */
   def dominates(pointA: List[Double], pointB: List[Double]): Boolean = {
     var dominates = false
     breakable {
@@ -128,21 +169,33 @@ object Task1 {
     dominates
   }
 
-  def isSkyline(key: List[Double], values: Iterable[List[Double]]): Boolean = {
+  /**
+   * Finds if point is a skyline point based on the values given
+   * @param point the point we want to find if its skyline
+   * @param values the dataset of the points we have to check
+   * @return true if its skyline, otherwise false
+   */
+  def isSkyline(point: List[Double], values: Iterable[List[Double]]): Boolean = {
     values.foreach(nums => {
-      if(isDominated(key, nums)) return false
+      if(isDominated(point, nums)) return false
     })
     true
   }
 
-  def isDominated(num1: List[Double], num2: List[Double]): Boolean = {
+  /**
+   * Checks if pointA is dominated by pointB
+   * @param pointA the first point
+   * @param pointB the second point
+   * @return true if its dominated (therefore not skyline), otherwise false
+   */
+  def isDominated(pointA: List[Double], pointB: List[Double]): Boolean = {
     var isDominated = 0
-    for( i <- num1.indices) {
-      if(num2.apply(i) <= num1.apply(i)) {
+    for( i <- pointA.indices) {
+      if(pointB.apply(i) <= pointA.apply(i)) {
         isDominated += 1
       }
     }
-    if(isDominated == num1.size) {
+    if(isDominated == pointA.size) {
       return true
     }
     false
