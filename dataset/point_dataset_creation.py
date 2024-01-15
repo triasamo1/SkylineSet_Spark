@@ -14,7 +14,7 @@ import csv
 import argparse
 import numpy as np
 
-def generate_data(data_distribution, total_points, dimensions, csv_name):
+def generate_data(data_distribution, total_points, dimensions, output_name):
   if data_distribution == "uniform":
       data = np.random.uniform(0.05, 1, (total_points, dimensions))
   elif data_distribution == "normal":
@@ -25,9 +25,8 @@ def generate_data(data_distribution, total_points, dimensions, csv_name):
       data = np.array([np.linspace(0, 1, total_points) if i == 0 else 1 - np.linspace(0, 1, total_points) + np.random.normal(scale=0.1, size=total_points) for i in range(dimensions)]).T
   data = np.clip(data, 0.01, 1)
 
-  with open(csv_name, 'w', newline='') as file:
-    writer = csv.writer(file, delimiter=' ')
-    writer.writerows(data)
+  with open(output_name, 'w', newline='') as file:
+    np.savetxt(file, data, fmt='%.4f', delimiter=' ')
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Generate data of certain distribution, size and dimension and save it to a CSV file.")
