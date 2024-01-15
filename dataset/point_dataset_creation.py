@@ -26,7 +26,7 @@ def generate_data(data_distribution, total_points, dimensions, csv_name):
   data = np.clip(data, 0.01, 1)
 
   with open(csv_name, 'w', newline='') as file:
-    writer = csv.writer(file)
+    writer = csv.writer(file, delimiter=' ')
     writer.writerows(data)
 
 if __name__ == "__main__":
