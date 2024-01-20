@@ -107,55 +107,59 @@ object Task3 {
     cell_id
   }
 
-  // Given a cell in a D-dimension Grid, find all the outward cell that are definitely dominated by it
-  def getOutwardCells(startingCell: List[Int], maxDimCell: List[Int], dimensions: Int): List[List[Int]] = {
+  def findCellsGreaterOrEqual(startingCell: List[Int], cubeSize: Int, dimensions: Int): List[List[Int]] = {
+    var resultCells = List[List[Int]]()
 
-    var currentCoord = startingCell
-    val outwardCoordinates = scala.collection.mutable.ListBuffer[List[Int]]()
-
-    while (!currentCoord.exists(elem => elem > 4)) {
-      outwardCoordinates += currentCoord
-      // Find the cells that are higher than the currentCoord in each dimension
-      for (d <- 0 until dimensions) {
-        for (i <- currentCoord(d) + 1 until 5) {
-          outwardCoordinates += currentCoord.updated(d, i)
+    def iterate(currentCell: List[Int], currentDimension: Int): Unit = {
+      if (currentDimension == dimensions) {
+        // Base case: reached the last dimension, add the current cell to the result
+        resultCells = resultCells :+ currentCell
+      } else {
+        for (i <- currentCell(currentDimension) to cubeSize) {
+          // Recursive case: iterate through the current dimension
+          val nextCell = currentCell.updated(currentDimension, i)
+          iterate(nextCell, currentDimension + 1)
         }
       }
-      currentCoord = currentCoord.map(elem => elem + 1)
     }
 
-    outwardCoordinates.toList
+    // Start the recursion from the first dimension
+    iterate(startingCell, 0)
+
+    resultCells
   }
 
   // Calculate the minimum and maximum dominance of a point that belongs to a specific cell
   def GetMinMaxCount(point: List[Double], CountsPerCell: Map[List[Int], Int], dimensions: Int): (Long, Long) ={
 
-    val max_dim_cell: List[Int] = List.fill(dimensions)(4)
-
+    // MIN
     // Add 1 to all dims to take the cell that is definitely dominated by the point and then find all the cells outwards that
-    val starting_cell_max: List[Int] = point.map( elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt )
-    val outwardCoordinates_max = getOutwardCells(starting_cell_max, max_dim_cell, dimensions)
-    val countsForCoordinates_max: List[Int] = outwardCoordinates_max.map { coordinates =>
-      CountsPerCell.getOrElse(coordinates, 0)
-    }
-
-    var countsForCoordinates_min: List[Int] = List(0)
+    var countsForCoordinates_min: List[Int] = List()
+    var outwardCoordinates_min: List[List[Int]] = List()
     val starting_cell_min: List[Int] = point.map(elem => ((BigDecimal(elem) / BigDecimal("0.2")).toInt + 1))
+
     if (!starting_cell_min.exists(elem => elem > 4)) {
-      val outwardCoordinates_min = getOutwardCells(starting_cell_min, max_dim_cell, dimensions)
+      outwardCoordinates_min = findCellsGreaterOrEqual(starting_cell_min, 4, dimensions)
       // Extract counts for each list in outwardCoordinates
       countsForCoordinates_min = outwardCoordinates_min.map { coordinates =>
         CountsPerCell.getOrElse(coordinates, 0)
       }
     }
 
+    // MAX
+    val starting_cell_max: List[Int] = point.map( elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt )
+    val outwardCoordinates_max = findCellsGreaterOrEqual(starting_cell_max, 4, dimensions)
+    val countsForCoordinates_max: List[Int] = outwardCoordinates_max.map { coordinates =>
+      CountsPerCell.getOrElse(coordinates, 0)
+    }
+
     (countsForCoordinates_min.sum.toLong, countsForCoordinates_max.sum.toLong)
   }
 
 
-  // Return true if base_point is dominated by target_point
-  def IsDominatedByPoint(base_point: List[Double], target_point: List[Double]): Boolean = {
-    base_point.zip(target_point).forall(pair => pair._1 <= pair._2)
+  // Return true if point_B is dominated by point_A
+  def IsDominatedByPoint(point_A: List[Double], point_B: List[Double]): Boolean = {
+    point_A.zip(point_B).forall(pair => pair._1 <= pair._2)
   }
 
   // Compare a given point with the points of the given block_id
@@ -197,6 +201,23 @@ object Task3 {
     cells_to_check
   }
 
+  def FindNeighbouringCells(point: List[Double], CountsPerCell: Map[List[Int], Int], dimensions: Int): List[List[Int]] ={
+
+    // MIN
+    // Add 1 to all dims to take the cell that is definitely dominated by the point and then find all the cells outwards that
+    var outwardCoordinates_min: List[List[Int]] = List(List())
+    val starting_cell_min: List[Int] = point.map(elem => ((BigDecimal(elem) / BigDecimal("0.2")).toInt + 1))
+    if (!starting_cell_min.exists(elem => elem > 4)) {
+      outwardCoordinates_min = findCellsGreaterOrEqual(starting_cell_min, 4, dimensions)
+    }
+
+    // MAX
+    val starting_cell_max: List[Int] = point.map( elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt )
+    val outwardCoordinates_max = findCellsGreaterOrEqual(starting_cell_max, 4, dimensions)
+
+    outwardCoordinates_max.diff(outwardCoordinates_min)
+  }
+
   def Top_k_GridDominance(data: RDD[List[Double]],dimensions: Int ,top: Int, sc: SparkContext): Array[(List[Double], Long)] = {
 
     // Create an RDD of the data points along with the BLock ID RDD: (point,BlockID)
@@ -236,7 +257,7 @@ object Task3 {
       candidate_points
         //        .collect()
         //        .toList
-        .map( triplet => (triplet, FindNeighbooringCells(triplet._1, dimensions))) // point, minCount, maxCount, Neighbouring Cells to check
+        .map( triplet => (triplet, FindNeighbouringCells(triplet._1, CountsPerCell, dimensions))) // point, minCount, maxCount, Neighbouring Cells to check
         .map( triplet => (triplet._1, GetTotalCount(triplet._1._1, triplet._1._2, points_with_cellID.filter(pair => triplet._2.contains(pair._2) ))))
         .map( triplet => (triplet._1._1, triplet._2)) // Keep only point and score
 
