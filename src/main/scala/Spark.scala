@@ -43,12 +43,14 @@ object Spark {
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task2.STD(parsedData, 3), 22)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task2.STD(parsedData, 3, sc), 22)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task2.topKDominatingPoints(parsedData, 3, sc), 2)
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task2.Top_k_GridDominance(parsedData, dimensions, 3, sc), 2222)
 
 
     // ----------- Task 3 ----------
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task3.topKSkylineBruteForce(parsedData, 3), 333)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task3.topKSkylinePoints2(parsedData, 3, sc), 333)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task3.topKSkylinePoints(parsedData, 3, sc), 3)
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints), () => Task3.Top_k_GridDominance(parsedData, dimensions, 3, sc), 3333)
   }
 
   def dimensionsTotalPointsText(dim: Int, totalPoints: Long): String = {
