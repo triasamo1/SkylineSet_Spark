@@ -156,7 +156,7 @@ object Task1 {
 
     val skylineResult = ArrayBuffer[List[Double]]()
 
-//    skylineResult +=  dataList.apply(0)._1
+    //    skylineResult +=  dataList.apply(0)._1
 
     var pStop = Double.PositiveInfinity
 

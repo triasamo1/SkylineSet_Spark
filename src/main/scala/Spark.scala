@@ -41,11 +41,11 @@ object Spark {
     val distribution = getDistribution(args.apply(0))
 
     // ----------- Task 1 ----------
-//    RunHelper.runTask4(dimensionsTotalPointsText(dimensions, totalPoints),
-//      () => Task1.skylinesBruteForce(parsedData), 1, "BruteForce", distribution)
-//    RunHelper.runTask(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.SFS(parsedData), 1, "SFS", distribution)
-//    RunHelper.runTask(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.SALSA(parsedData), 1, "SALSA", distribution)
-//    RunHelper.runTask3(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.ALS(parsedData), 1, "ALS", distribution)
+    //    RunHelper.runTask4(dimensionsTotalPointsText(dimensions, totalPoints),
+    //      () => Task1.skylinesBruteForce(parsedData), 1, "BruteForce", distribution)
+    //    RunHelper.runTask(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.SFS(parsedData), 1, "SFS", distribution)
+    //    RunHelper.runTask(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.SALSA(parsedData), 1, "SALSA", distribution)
+    //    RunHelper.runTask3(dimensionsTotalPointsText(dimensions, totalPoints), () => Task1.ALS(parsedData), 1, "ALS", distribution)
 
     // ----------- Task 2 ----------
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
@@ -57,18 +57,18 @@ object Spark {
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
       () => Task2.topKDominatingPoints(parsedData, 3, new ArrayBuffer[(List[Double], Long)](), sc), 2, "Parallel", distribution)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task2.Top_k_GridDominance(parsedData, dimensions, 3, sc), 2, "Grid", distribution)
-//
-//
-//    // ----------- Task 3 ----------
-//    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-//      () => Task3.topKSkylineBruteForce(parsedData, 3), 3, "BruteForce", distribution)
-//    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-//      () => Task3.topKSkylinePoints2(parsedData, 3, sc), 3, "Parallel", distribution)
-//    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-//      () => Task3.topKSkylinePoints(parsedData, 3, sc), 3, "WithBroadcast", distribution)
-//    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-//      () => Task3.Top_k_GridDominance(parsedData, dimensions, 3, sc), 3, "Grid", distribution)
+      () => Task2.topKGridDominance(parsedData, dimensions, 3, sc), 2, "Grid", distribution)
+    //
+    //
+    //    // ----------- Task 3 ----------
+    //    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
+    //      () => Task3.topKSkylineBruteForce(parsedData, 3), 3, "BruteForce", distribution)
+    //    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
+    //      () => Task3.topKSkylinePoints2(parsedData, 3, sc), 3, "Parallel", distribution)
+    //    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
+    //      () => Task3.topKSkylinePoints(parsedData, 3, sc), 3, "WithBroadcast", distribution)
+    //    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
+    //      () => Task3.Top_k_GridDominance(parsedData, dimensions, 3, sc), 3, "Grid", distribution)
   }
 
   def dimensionsTotalPointsText(dim: Int, totalPoints: Long): String = {
