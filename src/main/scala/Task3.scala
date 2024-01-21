@@ -101,12 +101,23 @@ object Task3 {
 
   //------------------------------------------------------------------------------------------------------------------
 
-  // Given a point, return the CellID( Coordinates of cell in D-dimension space) that it belongs assuming that max cell per dim are 5
+  /**
+   * Calculate the CellID based from the point coordinates. (Assuming 5 segments of 0.2 length in each dimension)
+   * @param point the point we want to find the CellID for
+   * @return the CellID coordinates in the format of (0,1,2) <- for a 3D CellID
+   */
   def getCellID(point: List[Double]) ={
     val cell_id: List[Int] = point.map( elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt )
     cell_id
   }
 
+  /**
+   * Calculate all the cells coordinates that are greater or equal in each dimension than the given cell
+   * @param startingCell the cell we want to examine
+   * @param maxIndex the index of the max cell in each dimension (5 per dimension ->index is 4 since we start counting from 0)
+   * @param dimensions the Number of total dimensions
+   * @return a List of CellID coordinates that are greater or equal in each dimension than the startingCell
+   */
   def findCellsGreaterOrEqual(startingCell: List[Int], cubeSize: Int, dimensions: Int): List[List[Int]] = {
     var resultCells = List[List[Int]]()
 
@@ -129,18 +140,24 @@ object Task3 {
     resultCells
   }
 
-  // Calculate the minimum and maximum dominance of a point that belongs to a specific cell
+  /**
+   * Calculate the Minimum (worst case scenario) and the Maximum (best case scenario) Dominance score of a given point
+   * @param point the point we want to examine
+   * @param countsPerCell the map of counts per each cell in the Grid
+   * @param dimensions the Number of total dimensions
+   * @return (MinCount , MaxCount)
+   */
   def getMinMaxCount(point: List[Double], countsPerCell: Map[List[Int], Int], dimensions: Int): (Long, Long) ={
 
-    // MIN
-    // Add 1 to all dims to take the cell that is definitely dominated by the point and then find all the cells outwards that
+    // MinCount
     var countsForCoordinates_min: List[Int] = List()
     var outwardCoordinates_min: List[List[Int]] = List()
     val starting_cell_min: List[Int] = point.map(elem => ((BigDecimal(elem) / BigDecimal("0.2")).toInt + 1))
 
     if (!starting_cell_min.exists(elem => elem > 4)) {
+      // List of Cells that are definitely dominated by the given point
       outwardCoordinates_min = findCellsGreaterOrEqual(starting_cell_min, 4, dimensions)
-      // Extract counts for each list in outwardCoordinates
+      // Number of points that the given point definitely dominates
       countsForCoordinates_min = outwardCoordinates_min.map { coordinates =>
         countsPerCell.getOrElse(coordinates, 0)
       }
@@ -148,7 +165,9 @@ object Task3 {
 
     // MAX
     val starting_cell_max: List[Int] = point.map( elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt )
+    // List of Cells that MIGHT BE dominated by the given point at the best case scenario
     val outwardCoordinates_max = findCellsGreaterOrEqual(starting_cell_max, 4, dimensions)
+    // Number of points that the given point MIGHT dominate at the best case scenario
     val countsForCoordinates_max: List[Int] = outwardCoordinates_max.map { coordinates =>
       countsPerCell.getOrElse(coordinates, 0)
     }
@@ -157,52 +176,79 @@ object Task3 {
   }
 
 
-  // Return true if point_B is dominated by point_A
+  /**
+   * Checks if point_A dominates point_B and returns True if it does or False if it
+   * @param point_A the point we want to examine
+   * @param point_B the point we want to check if it gets dominated by point_A
+   * @return True if if point_A dominates point_B or False if it does not
+   */
   def isDominatedByPoint(point_A: List[Double], point_B: List[Double]): Boolean = {
     point_A.zip(point_B).forall(pair => pair._1 <= pair._2)
   }
 
-  // Compare a given point with the points of the given block_id
+  /**
+   * Count the total number of points that the given point dominates out of the pointsToCheck set of points
+   * @param point the point we want to examine
+   * @param pointsToCheck the RDD of points to check how many of which, the given point dominates
+   * @return the total number of points it dominates
+   */
   def countDominanceInCells(point: List[Double], pointsToCheck: RDD[(List[Double], List[Int])]): Long = {
     val pointsDominated =
       pointsToCheck
-        //        .flatMap(_._2)
         .filter(pair => !pair._1.equals(point)) // exclude the point we are checking
         .filter(pair => isDominatedByPoint(point, pair._1))
         .count()
-        .toLong
 
     pointsDominated
   }
 
-  // Get the total dominance score of a given point
+  /**
+   * Calculate the Dominance Score of a given point
+   * @param point the point we want to examine
+   * @param minCount the Minimum Count of points that are definitely dominated by the given point
+   * @param pointsWithCells the RDD of points to check how many of which, the given point dominates
+   * @return the total dominance score of the given point
+   */
   def getTotalCount(point: List[Double], minCount: Long , pointsWithCells: RDD[(List[Double], List[Int])]): Long ={
     var sum = minCount
     sum = sum + countDominanceInCells(point, pointsWithCells)
     sum
   }
 
-  // Get the total dominance score of a given point
-  def findNeighbouringCells(point: List[Double], CountsPerCell: Map[List[Int], Int], dimensions: Int): List[List[Int]] ={
+  /**
+   * Find the list of CellIDs that have to be cross-examined to see if a given point dominates any points from those Cells
+   * @param point the point we want to examine
+   * @param dimensions the number of dimensions
+   * @return the list of CellIDs that have a coordinate index same with the CellID of the given point in at least one dimension
+   */
+  def findNeighbouringCells(point: List[Double], dimensions: Int): List[List[Int]] ={
 
-    // MIN
-    // Add 1 to all dims to take the cell that is definitely dominated by the point and then find all the cells outwards that
+    // List of Cells that are definitely dominated by the given point
     var outwardCoordinates_min: List[List[Int]] = List(List())
     val starting_cell_min: List[Int] = point.map(elem => ((BigDecimal(elem) / BigDecimal("0.2")).toInt + 1))
     if (!starting_cell_min.exists(elem => elem > 4)) {
       outwardCoordinates_min = findCellsGreaterOrEqual(starting_cell_min, 4, dimensions)
     }
 
-    // MAX
+    // List of Cells that MIGHT BE dominated by the given point at the best case scenario
     val starting_cell_max: List[Int] = point.map( elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt )
     val outwardCoordinates_max = findCellsGreaterOrEqual(starting_cell_max, 4, dimensions)
 
+    // Return the List of Cells we need to check on exactly how many points are dominated by the given point
     outwardCoordinates_max.diff(outwardCoordinates_min)
   }
 
+  /**
+   * Algorithm to find the Top-K dominating points out of the skyline set of the given dataset using the Grid Implementation
+   * @param data the RDD of points (dataset)
+   * @param dimensions the number of dimensions
+   * @param top the number of top points we are looking for
+   * @param sc spark context
+   * @return the list of CellIDs that have a coordinate index same with the CellID of the given point in at least one dimension
+   */
   def topKGridDominance(data: RDD[List[Double]],dimensions: Int ,top: Int, sc: SparkContext): Array[(List[Double], Long)] = {
 
-    // Create an RDD of the data points along with the BLock ID RDD: (point,BlockID)
+    //  RDD of the data points along with the CellID RDD: (point,CellID)
     val pointsWithCellID =
       data
         .map(point => (point, getCellID(point)))
@@ -234,7 +280,7 @@ object Task3 {
 
     val top_k =
       candidatePoints
-        .map( triplet => (triplet, findNeighbouringCells(triplet._1, countsPerCell, dimensions))) // point, minCount, maxCount, Neighbouring Cells to check
+        .map( triplet => (triplet, findNeighbouringCells(triplet._1, dimensions))) // point, minCount, maxCount, Neighbouring Cells to check
         .map( triplet => (triplet._1, getTotalCount(triplet._1._1, triplet._1._2, pointsWithCellID.filter(pair => triplet._2.contains(pair._2) ))))
         .map( triplet => (triplet._1._1, triplet._2)) // Keep only point and score
 
