@@ -73,6 +73,24 @@ object Task3 {
       .take(top)
   }
 
+  //----- Solution 4 -----
+
+  /**
+
+   * @param data input data with all the points
+   * @param top number of points we want to find
+   * @return an array with the top dominating points and their dominance score
+   */
+
+  def topKSkylinePoints(data: RDD[List[Double]], top: Int): Array[(List[Double], Long)] = {
+      val skylines = Task1.ALS(data).toList //find skyline points
+      data
+        .mapPartitions(par => Task2.calculateDominanceScore(par, skylines)) //finds dominance scores of the skyline points in each partition
+        .reduceByKey(_ + _) //adds all the scores for each points
+        .sortBy(-_._2) //sorts in descending order
+        .take(top)
+  }
+
   // --- Helper Functions ---
 
   def countDominatedPoints(point: List[Double], values: Broadcast[Array[List[Double]]]): Long = {
