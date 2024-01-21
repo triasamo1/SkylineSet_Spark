@@ -145,6 +145,55 @@ object Task1 {
     skyline
   }
 
+  //--- SALSA ----
+
+  def SALSA(data: RDD[List[Double]]): ArrayBuffer[List[Double]] = {
+    //First sort points based on the minimum dimension value
+    val dataList = data
+      .map(p => (p, p.min))
+      .sortBy(pair => (pair._2, pair._1.sum), ascending = false)
+      .collect()
+
+    val skylineResult = ArrayBuffer[List[Double]]()
+
+//    skylineResult +=  dataList.apply(0)._1
+
+    var pStop = Double.PositiveInfinity
+
+    var i = 0
+    breakable {
+      while (i < dataList.length) {
+        val p1 = dataList.apply(i)._1
+        val pi = dataList.apply(i)._1.max
+        val score = dataList.apply(i)._2
+        var flag = true
+        var j = 0
+
+        while(j < skylineResult.length) {
+          val p2 = skylineResult.apply(j)
+          if(dominates(p1, p2)) {
+            skylineResult.remove(j)
+            j -= 1
+          } else if (dominates(p2, p1)) {
+            flag = false
+            break()
+          }
+          j += 1
+        }
+        if(pStop <= score) {
+          break()
+        }
+        if(flag) {
+          skylineResult += p1
+          pStop = Math.min(pi, pStop)
+        }
+
+        i += 1
+      }
+    }
+    skylineResult
+  }
+
   //----- Helper Functions -----
   /**
    * Checks if pointA dominates pointB

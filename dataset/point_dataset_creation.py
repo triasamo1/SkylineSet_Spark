@@ -13,6 +13,12 @@ import sys
 import csv
 import argparse
 import numpy as np
+import os
+
+def save_to_file(data, file_name):
+    data = np.clip(data, 0.01, 1)
+    with open(output_name, 'w', newline='') as file:
+              np.savetxt(file_name, data, fmt='%.4f', delimiter=' ')
 
 def generate_data(data_distribution, total_points, dimensions, output_name):
   if data_distribution == "uniform":
@@ -25,15 +31,23 @@ def generate_data(data_distribution, total_points, dimensions, output_name):
       data = np.array([np.linspace(0, 1, total_points) if i == 0 else 1 - np.linspace(0, 1, total_points) + np.random.normal(scale=0.1, size=total_points) for i in range(dimensions)]).T
   data = np.clip(data, 0.01, 1)
 
-  with open(output_name, 'w', newline='') as file:
-    np.savetxt(file, data, fmt='%.4f', delimiter=' ')
+  folder_path = '../input/'
+  os.makedirs(folder_path, exist_ok=True)
+  with open(folder_path + output_name, 'w', newline='') as file:
+    np.savetxt(folder_path + output_name, data, fmt='%.4f', delimiter=' ')
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Generate data of certain distribution, size and dimension and save it to a CSV file.")
-  parser.add_argument("-dist", "--distribution", choices=["uniform", "normal", "correlated", "anticorrelated"], help="Data distribution type", required=True)
+#   parser.add_argument("-dist", "--distribution", choices=["uniform", "normal", "correlated", "anticorrelated"], help="Data distribution type", required=True)
   parser.add_argument("-p", "--points", type=int, help="Total number of points", required=True)
   parser.add_argument("-dim", "--dimensions", type=int, help="Number of dimensions", required=True)
-  parser.add_argument("-o", "--output", help="Output CSV file name", required=True)
+#   parser.add_argument("-o", "--output", help="Output CSV file name", required=True)
+
+  distributions = ['uniform', 'normal', 'correlated', 'anticorrelated']
 
   args = parser.parse_args()
-  generate_data(args.distribution, args.points, args.dimensions, args.output)
+
+  for distribution in distributions:
+    generate_data(distribution, args.points, args.dimensions, distribution + '' + str(args.points) + '.txt')
+
+
