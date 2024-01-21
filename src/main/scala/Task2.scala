@@ -117,7 +117,6 @@ object Task2 {
 
     val points = data.toList
 
-
     var skylinePoints = Task1.sfsForALS(points.toIterator)
       .map(point => Tuple2(point, countDominatedPoints(point, points))) //for every skyline point calculate its dominance score
       .to[ArrayBuffer]
