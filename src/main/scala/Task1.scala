@@ -48,8 +48,8 @@ object Task1 {
    * @return an iterator with the skyline points
    */
   def ALS(data: RDD[List[Double]]): Iterator[List[Double]] = {
-    val localSkylines = data.mapPartitions(sfsForALS) //calculate the local skyline points in each partition
-    val globalSkyline = sfsForALS(localSkylines.collect().toIterator) // calculate the global skyline points
+    val localSkylines = data.mapPartitions(salsaForALS) //calculate the local skyline points in each partition
+    val globalSkyline = salsaForALS(localSkylines.collect().toIterator) // calculate the global skyline points
     globalSkyline
   }
 
@@ -98,6 +98,55 @@ object Task1 {
     skylineResult.toIterator
   }
 
+  def salsaForALS(data: Iterator[List[Double]]): Iterator[List[Double]] = {
+    //First sort points based on distance from 0,0,0,0
+    val dataList = data
+      .toList
+      .map(p => (p, p.min))
+      .sortBy { case (tuple, minValue) => (-minValue, tuple.sum) }
+
+
+    val skylineResult = ArrayBuffer[List[Double]]()
+
+    //    skylineResult +=  dataList.apply(0)._1
+
+    var pStop = Double.PositiveInfinity
+
+    var i = 0
+    breakable {
+      while (i < dataList.length) {
+        val p1 = dataList.apply(i)._1
+        val pi = dataList.apply(i)._1.max
+        val score = dataList.apply(i)._2
+        var flag = true
+        var j = 0
+
+        while(j < skylineResult.length) {
+          val p2 = skylineResult.apply(j)
+          if(dominates(p1, p2)) {
+            skylineResult.remove(j)
+            j -= 1
+          } else if (dominates(p2, p1)) {
+            flag = false
+            break()
+          }
+          j += 1
+        }
+        if(pStop <= score) {
+          break()
+        }
+        if(flag) {
+          skylineResult += p1
+          pStop = Math.min(pi, pStop)
+        }
+
+        i += 1
+      }
+    }
+
+
+    skylineResult.toIterator
+  }
 
   // ---- SFS -----
   /**

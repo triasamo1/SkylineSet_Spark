@@ -25,12 +25,11 @@ def generate_data(data_distribution, total_points, dimensions, output_name):
       data = np.array([np.linspace(0, 1, total_points) + np.random.normal(scale=0.1, size=total_points) for _ in range(dimensions)]).T
   elif data_distribution == "anticorrelated":
       data = np.array([np.linspace(0, 1, total_points) if i == 0 else 1 - np.linspace(0, 1, total_points) + np.random.normal(scale=0.1, size=total_points) for i in range(dimensions)]).T
-  data = np.clip(data, 0.01, 1)
 
   folder_path = '../input/'
   os.makedirs(folder_path, exist_ok=True)
   with open(folder_path + output_name, 'w', newline='') as file:
-    np.savetxt(folder_path + output_name, data, fmt='%.4f', delimiter=' ')
+    np.savetxt(folder_path + output_name, data, delimiter=' ')
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Generate data of certain distribution, size and dimension and save it to a CSV file.")
