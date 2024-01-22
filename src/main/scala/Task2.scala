@@ -273,18 +273,18 @@ object Task2 {
   }
 
   /**
-   * Calculate the Minimum (worst case scenario) and the Maximum (best case scenario) Dominance score of a given point
-   * @param point the point we want to examine
+   * Calculate the Minimum (worst case scenario) and the Maximum (best case scenario) Dominance score of a given cell
+   * @param cell the point we want to examine
    * @param countsPerCell the map of counts per each cell in the Grid
    * @param dimensions the Number of total dimensions
    * @return (MinCount , MaxCount)
    */
-  def getMinMaxCount(point: List[Double], countsPerCell: Map[List[Int], Int], dimensions: Int): (Long, Long) ={
+  def getMinMaxCountCell(cell: List[Int], countsPerCell: Map[List[Int], Int], dimensions: Int): (Long, Long) ={
 
     // MinCount
     var countsForCoordinates_min: List[Int] = List()
     var outwardCoordinates_min: List[List[Int]] = List()
-    val starting_cell_min: List[Int] = point.map(elem => ((BigDecimal(elem) / BigDecimal("0.2")).toInt + 1))
+    val starting_cell_min: List[Int] = cell.map(elem => elem + 1)
 
     if (!starting_cell_min.exists(elem => elem > 4)) {
       // List of Cells that are definitely dominated by the given point
@@ -296,9 +296,8 @@ object Task2 {
     }
 
     // MaxCount
-    val starting_cell_max: List[Int] = point.map( elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt )
     // List of Cells that MIGHT BE dominated by the given point at the best case scenario
-    val outwardCoordinates_max = findCellsGreaterOrEqual(starting_cell_max, 4, dimensions)
+    val outwardCoordinates_max = findCellsGreaterOrEqual(cell, 4, dimensions)
     // Number of points that the given point MIGHT dominate at the best case scenario
     val countsForCoordinates_max: List[Int] = outwardCoordinates_max.map { coordinates =>
       countsPerCell.getOrElse(coordinates, 0)
@@ -369,6 +368,7 @@ object Task2 {
     outwardCoordinates_max.diff(outwardCoordinates_min)
   }
 
+
   /**
    * Algorithm to find the Top-K dominating points out of the given dataset using the Grid Implementation
    * @param data the RDD of points (dataset)
@@ -390,16 +390,25 @@ object Task2 {
       .collect()
       .toMap
 
-    val pointsWithMinMax =
-      data
-        .map { point =>
-          val (minCount, maxCount) = getMinMaxCount(point, countsPerCell, dimensions)
-          (point, minCount, maxCount)
+    // Generate the list of all possible Cells
+    val startingCell = List.fill(dimensions)(0)
+    val allCells = findCellsGreaterOrEqual(startingCell,  4, dimensions)
+
+    val cellsWithMinMax =
+      allCells
+        .map { cell =>
+          val (minCount, maxCount) = getMinMaxCountCell(cell, countsPerCell, dimensions)
+          (cell,(minCount, maxCount))
         }
+        .toMap
+
+    val pointsWithMinMax =
+      pointsWithCellID
+        .map(pair => (pair._1,  cellsWithMinMax.getOrElse(pair._2, (0L, 0L))) )
+        .map(pair => (pair._1, pair._2._1, pair._2._2)  )
         .sortBy(_._3, ascending= false)
 
     val minCountOfFirstElement: Long = pointsWithMinMax.first._2
-
     val candidatePoints =
       pointsWithMinMax
         .filter(  _._3 >=  minCountOfFirstElement)    // I assume that Always gives an RDD greater or equal than top-k and that it fits to the memory
