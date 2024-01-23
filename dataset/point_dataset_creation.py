@@ -17,14 +17,15 @@ def save_to_file(data, file_name):
               np.savetxt(file_name, data, fmt='%.4f', delimiter=' ')
 
 def generate_data(data_distribution, total_points, dimensions, output_name):
-  if data_distribution == "uniform":
+ if data_distribution == "uniform":
       data = np.random.uniform(0.05, 1, (total_points, dimensions))
   elif data_distribution == "normal":
-      data = np.random.normal(0.5, 0.15, (total_points, dimensions))
+      data = np.random.normal(0.5, 0.12, (total_points, dimensions))
   elif data_distribution == "correlated":
-      data = np.array([np.linspace(0, 1, total_points) + np.random.normal(scale=0.1, size=total_points) for _ in range(dimensions)]).T
+      data = np.array([np.linspace(0.15, 0.85, total_points) + np.random.normal(scale=0.05, size=total_points) for _ in range(dimensions)]).T
   elif data_distribution == "anticorrelated":
-      data = np.array([np.linspace(0, 1, total_points) if i == 0 else 1 - np.linspace(0, 1, total_points) + np.random.normal(scale=0.1, size=total_points) for i in range(dimensions)]).T
+      data = np.array([1 -np.linspace(0.2, 0.8, total_points) + np.random.normal(scale=0.05, size=total_points) if i == 0 else np.linspace(0.2, 0.8, total_points) + np.random.normal(scale=0.05, size=total_points) for i in range(dimensions)]).T
+  # data = np.clip(data, 0.0001, 1)
 
   folder_path = '../input/'
   os.makedirs(folder_path, exist_ok=True)
