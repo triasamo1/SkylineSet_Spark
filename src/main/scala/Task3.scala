@@ -39,7 +39,7 @@ object Task3 {
    * @param sc spark context
    * @return an array with the top dominating points and their dominance score
    */
-  def topKSkylinePoints(data: RDD[List[Double]], top: Int, sc: SparkContext): Array[(List[Double], Long)] = {
+  def topKBroadcastPoints(data: RDD[List[Double]], top: Int, sc: SparkContext): Array[(List[Double], Long)] = {
     val broadcastData = sc.broadcast(data.collect()) //broadcast data rdd
     val skylines = Task1.ALS(data).toList //find skyline points
 
@@ -64,7 +64,7 @@ object Task3 {
    * @param sc spark context
    * @return an array with the top dominating points and their dominance score
    */
-  def topKSkylinePoints2(data: RDD[List[Double]], top: Int, sc: SparkContext): Array[(List[Double], Long)] = {
+  def topKCartesian(data: RDD[List[Double]], top: Int, sc: SparkContext): Array[(List[Double], Long)] = {
     sc.parallelize(Task1.ALS(data).toList).cartesian(data)
       .filter(pair => pair._1 != pair._2)
       .map(pair => (pair._1, if (Task1.dominates(pair._1, pair._2)) 1L else 0L))
@@ -76,19 +76,25 @@ object Task3 {
   //----- Solution 4 -----
 
   /**
-
+   * First, we broadcast the skylines found using the ALS method from Task 1.
+   * Then we map the points in the initial data rdd to partitions and for each partition we calculate
+   * for the skyline points their dominance score in the partition. We calculate their dominance score
+   * using the function calculateDominanceScore from Task 2. Lastly, we sort them in an descending order
+   * based on their dominance score and we return the top k.
    * @param data input data with all the points
    * @param top number of points we want to find
    * @return an array with the top dominating points and their dominance score
    */
 
-  def topKSkylinePoints(data: RDD[List[Double]], top: Int): Array[(List[Double], Long)] = {
-      val skylines = Task1.ALS(data).toList //find skyline points
-      data
-        .mapPartitions(par => Task2.calculateDominanceScore(par, skylines)) //finds dominance scores of the skyline points in each partition
-        .reduceByKey(_ + _) //adds all the scores for each points
-        .sortBy(-_._2) //sorts in descending order
-        .take(top)
+  def topKBroadcastSkylines(data: RDD[List[Double]], top: Int, sc: SparkContext): Array[(List[Double], Long)] = {
+    val skylines = Task1.ALS(data).toList //find skyline points
+    val broadcastSkylines = sc.broadcast(skylines) //broadcast data rdd
+
+    data
+      .mapPartitions(par => Task2.calculateDominanceScore(par, broadcastSkylines.value)) //finds dominance scores of the skyline points in each partition
+      .reduceByKey(_ + _) //adds all the scores for each points
+      .sortBy(-_._2) //sorts in descending order
+      .take(top)
   }
 
   // --- Helper Functions ---

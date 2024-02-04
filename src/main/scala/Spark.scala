@@ -64,13 +64,11 @@ object Spark {
 
   def runTask2(parsedData: RDD[List[Double]], dimensions: Int, totalPoints: Long, distribution: String, sc: SparkContext): Unit = {
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task2.task2BruteForce(parsedData, 3), 2, "STD", distribution)
+      () => Task2.task2BruteForce(parsedData, 3), 2, "BruteForce", distribution)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task2.topKDominating(parsedData, 3, new ArrayBuffer[(List[Double], Long)]()), 2, "Parallel", distribution)
+      () => Task2.topKDominating(parsedData, 3, new ArrayBuffer[(List[Double], Long)]()), 2, "STD without exclusive region", distribution)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
       () => Task2.STD(parsedData, 3), 2, "STD", distribution)
-    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task2.topKDominatingPoints(parsedData, 3, new ArrayBuffer[(List[Double], Long)](), sc), 2, "Parallel", distribution)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
       () => Task2.topKGridDominance(parsedData, dimensions, 3, sc), 2, "Grid", distribution)
   }
@@ -79,9 +77,11 @@ object Spark {
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
       () => Task3.topKSkylineBruteForce(parsedData, 3), 3, "BruteForce", distribution)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task3.topKSkylinePoints2(parsedData, 3, sc), 3, "Parallel", distribution)
+      () => Task3.topKCartesian(parsedData, 3, sc), 3, "Cartesian", distribution)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task3.topKSkylinePoints(parsedData, 3, sc), 3, "WithBroadcast", distribution)
+      () => Task3.topKBroadcastPoints(parsedData, 3, sc), 3, "BroadcastPoints", distribution)
+    RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
+      () => Task3.topKBroadcastSkylines(parsedData, 3, sc), 3, "BroadcastSkylines", distribution)
     RunHelper.runTask2(dimensionsTotalPointsText(dimensions, totalPoints),
       () => Task3.topKGridDominance(parsedData, dimensions, 3, sc), 3, "Grid", distribution)
   }

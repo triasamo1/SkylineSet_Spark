@@ -45,31 +45,10 @@ object Task2 {
     totalPoints
   }
 
-  //------ Partitioning ----
-  /**
-   * Finds top k dominating points using the algorithm STD. It finds the dominating points in parallel for each
-   * partition and then combine them to find the global dominating points.
-   * @param data input rdd with all the points
-   * @param top number of points we want to find
-   * @param sc spark context
-   * @return an iterator with the top dominating points
-   */
-  def topKDominatingPoints(data: RDD[List[Double]], top: Int,  acc: ArrayBuffer[(List[Double], Long)], sc: SparkContext): Array[(List[Double], Long)] = {
-
-    val broadcastData = sc.broadcast(data.collect()) //broadcast data rdd
-
-    data.mapPartitions(par => STD(par, top))
-       .distinct()
-       .map(point => (point._1, Task3.countDominatedPoints(point._1, broadcastData)))
-       .reduceByKey(_+_)
-       .sortBy(-_._2)
-       .take(top)
-       .sortBy(-_._2) //sort elements in a descending order based on their dominance score
-       .take(top) //take first 'top' elements
-  }
 
   /**
-   * Finds top k dominating points using an iterative version of the STD algorithm.
+   * Finds top k dominating points using an iterative version of the STD algorithm without finding the exclusive region.
+   * Instead it recalculates the skyline points every time.
    * Until k = 0, It finds the skyline points, counts the domination score for each skyline point in the partition,
    * and then takes the first element with the highest score, adds it to the result and repeats.
    * @param data the input data
@@ -104,61 +83,6 @@ object Task2 {
     result.toIterator
   }
 
-
-  /**
-   * It implements the STD algorithm to find the top-k dominating elements
-   * @param data input data with all the points
-   * @param top number of points we want to find
-   * @param skylines the points that are skylines in the dataset
-   * @return an iterator with the top dominating points
-   */
-  def STD(data: Iterator[List[Double]], top: Int): Iterator[(List[Double], Long)] = {
-    if (top == 0) Array()
-
-    val points = data.toList
-
-    var skylinePoints = Task1.sfsForALS(points.toIterator)
-      .map(point => Tuple2(point, countDominatedPoints(point, points))) //for every skyline point calculate its dominance score
-      .to[ArrayBuffer]
-      .sortBy(-_._2) //sort them based on their dominance score
-
-    var result = ArrayBuffer[(List[Double], Long)]() //add the point with the max dominance score to the result array
-    var topK = top
-    // until all the top-k elements have been found
-    breakable {
-      while (topK > 0) {
-        val pointToAdd = skylinePoints.apply(0) //get the first point of the skylinePoints buffer
-        result :+= pointToAdd //add first point(the one with the maximum score) to the result array
-
-        skylinePoints.remove(0) //remove the point since we have already added to the result
-        topK -= 1
-        if (topK == 0) {
-          break()
-        }
-        val currPoint = pointToAdd._1
-
-        val regionPoints = points
-          .filter(p => !p.equals(currPoint)) //filter the current point
-          .filter(p => !skylinePoints.map(_._1).contains(p)) //filter the point if it's already in toCalculatePoints array
-          .filter(p => Task1.dominates(currPoint, p)) //get only the points that are dominated by 'point'
-          .filter(p => isInRegion(currPoint, p, skylinePoints)) //get only the points belonging to region of current point
-
-        if (regionPoints.nonEmpty)
-          Task1.sfsForALS(regionPoints.toIterator)
-            .map(p => (p, countDominatedPoints(p, points))) //count the dominated points for each
-            .foreach(p => skylinePoints.append(p)) //add every point toCalculatePoints array
-
-        //Add points belonging only to region of point to the toCalculatePoints RDD
-        skylinePoints = skylinePoints
-          .sortWith(_._2 > _._2) //sort points based on their dominance score
-
-
-      }
-    }
-
-    result.toIterator
-  }
-
   def STD(data: RDD[List[Double]], top: Int): Array[(List[Double], Long)] = {
     if (top == 0) Array()
 
@@ -181,6 +105,8 @@ object Task2 {
 
         skylinePoints.remove(0) //remove the point since we have already added to the result
         topK -= 1
+
+        if(topK == 0) break()
         val currPoint = pointToAdd._1
 
         val regionPoints = points
@@ -189,7 +115,7 @@ object Task2 {
           .filter(p => Task1.dominates(currPoint, p)) //get only the points that are dominated by 'point'
           .filter(p => isInRegion(currPoint, p, skylinePoints)) //get only the points belonging to region of current point
 
-        Task1.sfsForALS(regionPoints.toIterator) //find the skyline points between the region points
+        Task1.salsaForALS(regionPoints.toIterator) //find the skyline points between the region points
           .map(p => (p, countDominatedPoints(p, points))) //count the dominated points for each
           .foreach(p => skylinePoints.append(p)) //add every point toCalculatePoints array
 

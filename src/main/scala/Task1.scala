@@ -27,23 +27,10 @@ object Task1 {
   }
 
   // ------- ALS -------
-  /**
-   * Finds the manhattan distance of the point from the start (0,0,0,0...).
-   * @param point the point we want to find its distance
-   * @return the manhattan distance distance
-   */
-  def distanceFromStart(point: List[Double]): Double = {
-    var sum = 0.0
-    point.foreach(value => {
-      sum += (value - 0).abs
-    })
-
-    sum
-  }
 
   /**
    * Method to find the skyline points using the All Local Skylines method. First it finds the skylines points for each
-   * partition (local skylines), using the SFS algorithm and then using the local skylines finds the global skylines points.
+   * partition (local skylines), using the SALSA algorithm and then using the local skylines finds the global skylines points.
    * @param data input data
    * @return an iterator with the skyline points
    */
@@ -53,62 +40,14 @@ object Task1 {
     globalSkyline
   }
 
-  /**
-   * Implements the Sort-First Skyline (SFS) algorithm to find the skyline points.
-   * @param data input data
-   * @return skyline points
-   */
-  def sfsForALS(data: Iterator[List[Double]]): Iterator[List[Double]] = {
-    //First sort points based on distance from 0,0,0,0
-    val dataList = data
-      .toList
-      .map(point => Tuple2(point, distanceFromStart(point)))
-      .sortBy(_._2)
-
-    val skylineResult = ArrayBuffer[List[Double]]()
-
-    skylineResult += dataList.head._1 //add the first element to the skyline result
-
-    var i = 1
-    while (i < dataList.length) {
-      val p1 = dataList.apply(i)._1
-      var flag = true //determines if a point should be added to the skyline result
-      var j = 0
-      breakable {
-        while (j < skylineResult.length) { //check p1 with every element on the skyline result
-          val p2 = skylineResult.apply(j)
-          //if p1 dominates p2 then add the p1 to the skyline result and remove p2 from the result
-          if (dominates(p1, p2)) {
-            skylineResult.remove(j)
-            j -= 1
-          }
-          //if p2 (which is already in the skyline result) dominates p1 then stop the loop,
-          //since p1 is not a skyline point
-          if (dominates(p2, p1)) {
-            flag = false
-            break()
-          }
-          j += 1
-        }
-        if (flag) skylineResult += p1 //add point to skylineResult
-      }
-      i += 1
-    }
-
-    skylineResult.toIterator
-  }
-
   def salsaForALS(data: Iterator[List[Double]]): Iterator[List[Double]] = {
-    //First sort points based on distance from 0,0,0,0
+    //First sort points based on the minimum dimension value
     val dataList = data
       .toList
       .map(p => (p, p.min))
       .sortBy { case (tuple, minValue) => (-minValue, tuple.sum) }
 
-
     val skylineResult = ArrayBuffer[List[Double]]()
-
-    //    skylineResult +=  dataList.apply(0)._1
 
     var pStop = Double.PositiveInfinity
 
@@ -144,13 +83,25 @@ object Task1 {
       }
     }
 
-
     skylineResult.toIterator
   }
 
   // ---- SFS -----
+
   /**
-   * Same function as above, but with different inputs.
+   * Finds the manhattan distance of the point from the start (0,0,0,0...).
+   * @param point the point we want to find its distance
+   * @return the manhattan distance distance
+   */
+  private def distanceFromStart(point: List[Double]): Double = {
+    var sum = 0.0
+    point.foreach(value => {
+      sum += (value - 0).abs
+    })
+    sum
+  }
+
+  /**
    * Implements the Sort-First Skyline (SFS) algorithm to find the skyline points.
    * @param data input data
    * @return skyline points
@@ -196,6 +147,12 @@ object Task1 {
 
   //--- SALSA ----
 
+  /**
+   * Implements the SALSA algorithm to find skyline points.
+   * @param data input data
+   * @return skyline points
+   */
+
   def SALSA(data: RDD[List[Double]]): ArrayBuffer[List[Double]] = {
     //First sort points based on the minimum dimension value
     val dataList = data
@@ -204,8 +161,6 @@ object Task1 {
       .collect()
 
     val skylineResult = ArrayBuffer[List[Double]]()
-
-    //    skylineResult +=  dataList.apply(0)._1
 
     var pStop = Double.PositiveInfinity
 
