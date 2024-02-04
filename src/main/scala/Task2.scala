@@ -3,6 +3,7 @@ package org.example
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.Breaks.{break, breakable}
 
@@ -51,11 +52,13 @@ object Task2 {
    * Instead it recalculates the skyline points every time.
    * Until k = 0, It finds the skyline points, counts the domination score for each skyline point in the partition,
    * and then takes the first element with the highest score, adds it to the result and repeats.
+   *
    * @param data the input data
    * @param top number of points we want to find
-   * @param result
+   * @param result stores the result
    * @return
    */
+  @tailrec
   def topKDominating(data: RDD[List[Double]], top: Int, result: ArrayBuffer[(List[Double], Long)]): Array[(List[Double], Long)] = {
     if(top == 0) {
       result.toArray
@@ -137,7 +140,7 @@ object Task2 {
    * @param skylines the skyline points
    * @return true if pointB is in region of pointA, else false
    */
-  def isInRegion(pointA: List[Double], pointB: List[Double], skylines: ArrayBuffer[(List[Double], Long)]): Boolean = {
+  private def isInRegion(pointA: List[Double], pointB: List[Double], skylines: ArrayBuffer[(List[Double], Long)]): Boolean = {
     skylines
       .map(_._1) //get the points, without their dominance score
       .filter(p => !p.equals(pointA))  //get the points that are not equal to pointA
@@ -164,8 +167,8 @@ object Task2 {
    * @param point the point we want to find the CellID for
    * @return the CellID coordinates in the format of (0,1,2) <- for a 3D CellID
    */
-  def getCellID(point: List[Double]) ={
-    val cell_id: List[Int] = point.map( elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt )
+  def getCellID(point: List[Double]): List[Int] = {
+    val cell_id: List[Int] = point.map(elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt)
     cell_id
   }
 
@@ -205,7 +208,7 @@ object Task2 {
    * @param dimensions the Number of total dimensions
    * @return (MinCount , MaxCount)
    */
-  def getMinMaxCountCell(cell: List[Int], countsPerCell: Map[List[Int], Int], dimensions: Int): (Long, Long) ={
+  private def getMinMaxCountCell(cell: List[Int], countsPerCell: Map[List[Int], Int], dimensions: Int): (Long, Long) ={
 
     // MinCount
     var countsForCoordinates_min: List[Int] = List()
@@ -281,7 +284,7 @@ object Task2 {
 
     // List of Cells that are definitely dominated by the given point
     var outwardCoordinates_min: List[List[Int]] = List(List())
-    val starting_cell_min: List[Int] = point.map(elem => ((BigDecimal(elem) / BigDecimal("0.2")).toInt + 1))
+    val starting_cell_min: List[Int] = point.map(elem => (BigDecimal(elem) / BigDecimal("0.2")).toInt + 1)
     if (!starting_cell_min.exists(elem => elem > 4)) {
       outwardCoordinates_min = findCellsGreaterOrEqual(starting_cell_min, 4, dimensions)
     }

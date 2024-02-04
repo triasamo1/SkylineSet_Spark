@@ -2,7 +2,6 @@ package org.example
 
 import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Paths, StandardOpenOption}
-import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.asJavaIterableConverter
 
 object FileHelper {
@@ -12,42 +11,37 @@ object FileHelper {
     new File(path).mkdirs()
   }
 
-  def getWriter(path: String): PrintWriter = {
+  private def getWriter(path: String): PrintWriter = {
     new PrintWriter(new File("results/" + path))
   }
 
-  def getStatsText(text: String, taskNumber: Int, duration: Long, resultPoints: Long): String = {
+  private def getStatsText(text: String, taskNumber: Int, duration: Long, resultPoints: Long): String = {
     "--Solution File for Task " + taskNumber + " --\n" +
       "Total time to run = " + duration + "ms" +
       text +
-      getTextBasedOnTask(taskNumber, resultPoints) + //TODO
+      getTextBasedOnTask(taskNumber, resultPoints) +
       "---------------------------------------------------------\n"
   }
 
-  def getTextBasedOnTask(task: Int, resultPoints: Long): String = {
+  private def getTextBasedOnTask(task: Int, resultPoints: Long): String = {
     if (task == 1) "Total skyline points found =  " + resultPoints + "\n"  else "\n"
   }
 
-  def writeToPerformanceFile(algorithm: String, duration: Long, distribution: String) = {
-    // File path
+  def writeToPerformanceFile(task: Int, algorithm: String, duration: Long, distribution: String): Unit = {
     val csvFilePath: String = "performance.csv"
-
-    // Data to be appended
-    val newData: Seq[String] = Seq(distribution, algorithm, duration.toString)
-
-    // Check if the file exists
+    // data to be appended
+    val newData: Seq[String] = Seq(task.toString, distribution, algorithm, duration.toString, Spark.cores.toString,
+      Spark.totalPointsGlobal.toString, Spark.dimensionsGlobal.toString)
+    // check if the file exists
     val fileExists: Boolean = Files.exists(Paths.get(csvFilePath))
 
-    // Append data to the CSV file
+    // append data to the CSV file
     val csvLines: Seq[String] = if (fileExists) {
       Seq(newData.mkString(","))
     } else {
-      Seq("Distribution,Algorithm,Duration", newData.mkString(","))
+      Seq("TaskNo,Distribution,Algorithm,Duration,Cores,TotalPoints,Dimensions", newData.mkString(","))
     }
-
     Files.write(Paths.get(csvFilePath), csvLines.asJava, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
-
-    println(s"Data has been appended to '$csvFilePath'.")
   }
 
   def writeToFile(text: String, taskNumber: Int, duration: Long, answer: List[List[Double]], filePath: String): Unit = {
@@ -66,33 +60,30 @@ object FileHelper {
     writer.write(getStatsText(text, taskNumber, duration, answer.length.toLong))
 
     answer
-      .map(_._1)  //TODD for 2
-      .map(p => p.map(_.toString).mkString(", ") + "\n")
+      .map(p => "(" + p._1.map(_.toString).mkString(", ") +")" + " : " + p._2 + "\n")
       .foreach(p => writer.write(p))
     writer.close()
   }
 
-  def writeToFile2(text: String, taskNumber: Int, duration: Long, answer: List[(List[Double], Long)], filePath: String): Unit = {
-    val writer = getWriter(filePath)
+//  def writeToFile2(text: String, taskNumber: Int, duration: Long, answer: List[(List[Double], Long)], filePath: String): Unit = {
+//    val writer = getWriter(filePath)
+//
+//    writer.write(getStatsText(text, taskNumber, duration, answer.size.toLong))
+//
+//    answer
+//      .map(p => "(" + p._1.map(_.toString).mkString(", ") +")" + " : " + p._2+ "\n")
+//      .foreach(p => writer.write(p))
+//    writer.close()
+//  }
 
-    writer.write(getStatsText(text, taskNumber, duration, answer.size.toLong))
-
-    answer
-      .map(_._1) //TODD for 2
-      .map(p => p.map(_.toString).mkString(", ") + "\n")
-      .foreach(p => writer.write(p))
-    writer.close()
-  }
-
-  def writeToFile2(text: String, taskNumber: Int, duration: Long, answer: ArrayBuffer[(List[Double], Long)], filePath: String): Unit = {
-    val writer = getWriter(filePath)
-
-    writer.write(getStatsText(text, taskNumber, duration, answer.size.toLong))
-
-    answer
-      .map(_._1) //TODD for 2
-      .map(p => p.map(_.toString).mkString(", ") + "\n")
-      .foreach(p => writer.write(p))
-    writer.close()
-  }
+//  def writeToFile2(text: String, taskNumber: Int, duration: Long, answer: ArrayBuffer[(List[Double], Long)], filePath: String): Unit = {
+//    val writer = getWriter(filePath)
+//
+//    writer.write(getStatsText(text, taskNumber, duration, answer.size.toLong))
+//
+//    answer
+//      .map(p => "(" + p._1.map(_.toString).mkString(", ") +")" + " : " + p._2+ "\n")
+//      .foreach(p => writer.write(p))
+//    writer.close()
+//  }
 }

@@ -228,7 +228,7 @@ object Task1 {
    * @param values the dataset of the points we have to check
    * @return true if its skyline, otherwise false
    */
-  def isSkyline(point: List[Double], values: Iterable[List[Double]]): Boolean = {
+  private def isSkyline(point: List[Double], values: Iterable[List[Double]]): Boolean = {
     values.foreach(nums => {
       if(isDominated(point, nums)) return false
     })
@@ -241,7 +241,7 @@ object Task1 {
    * @param pointB the second point
    * @return true if its dominated (therefore not skyline), otherwise false
    */
-  def isDominated(pointA: List[Double], pointB: List[Double]): Boolean = {
+  private def isDominated(pointA: List[Double], pointB: List[Double]): Boolean = {
     var isDominated = 0
     for( i <- pointA.indices) {
       if(pointB.apply(i) <= pointA.apply(i)) {
