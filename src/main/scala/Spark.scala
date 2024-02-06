@@ -12,7 +12,7 @@ object Spark {
   var totalPointsGlobal: Long = 0
   var dimensionsGlobal: Int = 0
   def main(args: Array[String]): Unit = {
-    val coreList = List(4, 2)
+    val coreList = List(8)
 
     for(core <- coreList) {
       cores = core
@@ -77,7 +77,7 @@ object Spark {
 
     val distributions = List("anticorrelated", "uniform", "correlated", "normal")
 //    val totalPoints = List(100, 10000, 100000, 1000000, 10000000)
-    val totalPoints = List(1000)
+    val totalPoints = List(10000)
 
     for(d <- distributions) {
       for(p <- totalPoints) {
@@ -105,10 +105,10 @@ object Spark {
     val distribution = getDistribution(file)
 
     // ----------- Task 1 ----------
-    runTask1(parsedData, dimensions, totalPoints, distribution)
+//    runTask1(parsedData, dimensions, totalPoints, distribution)
 
     // ----------- Task 2 ----------
-    runTask2(parsedData, dimensions, totalPoints, distribution, sc)
+//    runTask2(parsedData, dimensions, totalPoints, distribution, sc)
 
     // ----------- Task 3 ----------
     runTask3(parsedData, dimensions, totalPoints, distribution, sc)
@@ -126,27 +126,29 @@ object Spark {
   }
 
   private def runTask2(parsedData: RDD[List[Double]], dimensions: Int, totalPoints: Long, distribution: String, sc: SparkContext): Unit = {
+//    RunHelper.runTask(2, dimensionsTotalPointsText(dimensions, totalPoints),
+//      () => Task2.task2BruteForce(parsedData, 3), 2, "BruteForce", distribution)
     RunHelper.runTask(2, dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task2.task2BruteForce(parsedData, 3), 2, "BruteForce", distribution)
-    RunHelper.runTask(2, dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task2.topKDominating(parsedData, 3, new ArrayBuffer[(List[Double], Long)]()), 2, "STD without exclusive region", distribution)
+      () => Task2.topKDominating(parsedData, 3, new ArrayBuffer[(List[Double], Long)]()), 2, "STDWithoutExclusiveRegion", distribution)
     RunHelper.runTask(2, dimensionsTotalPointsText(dimensions, totalPoints),
       () => Task2.STD(parsedData, 3), 2, "STD", distribution)
     RunHelper.runTask(2, dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task2.topKGridDominance(parsedData, dimensions, 3, sc), 2, "Grid", distribution)
+      () => Task2.STDRecursive(parsedData, 3, sc), 2, "STDRecursive", distribution)
+//    RunHelper.runTask(2, dimensionsTotalPointsText(dimensions, totalPoints),
+//      () => Task2.topKGridDominance(parsedData, dimensions, 3, sc), 2, "Grid", distribution)
   }
 
   private def runTask3(parsedData: RDD[List[Double]], dimensions: Int, totalPoints: Long, distribution: String, sc: SparkContext): Unit = {
-    RunHelper.runTask(3, dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task3.topKSkylineBruteForce(parsedData, 3), 3, "BruteForce", distribution)
-    RunHelper.runTask(3, dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task3.topKCartesian(parsedData, 3, sc), 3, "Cartesian", distribution)
+//    RunHelper.runTask(3, dimensionsTotalPointsText(dimensions, totalPoints),
+//      () => Task3.topKSkylineBruteForce(parsedData, 3), 3, "BruteForce", distribution)
+//    RunHelper.runTask(3, dimensionsTotalPointsText(dimensions, totalPoints),
+//      () => Task3.topKCartesian(parsedData, 3, sc), 3, "Cartesian", distribution)
     RunHelper.runTask(3, dimensionsTotalPointsText(dimensions, totalPoints),
       () => Task3.topKBroadcastPoints(parsedData, 3, sc), 3, "BroadcastPoints", distribution)
     RunHelper.runTask(3, dimensionsTotalPointsText(dimensions, totalPoints),
       () => Task3.topKBroadcastSkylines(parsedData, 3, sc), 3, "BroadcastSkylines", distribution)
-    RunHelper.runTask(3, dimensionsTotalPointsText(dimensions, totalPoints),
-      () => Task3.topKGridDominance(parsedData, dimensions, 3, sc), 3, "Grid", distribution)
+//    RunHelper.runTask(3, dimensionsTotalPointsText(dimensions, totalPoints),
+//      () => Task3.topKGridDominance(parsedData, dimensions, 3, sc), 3, "Grid", distribution)
   }
 
   private def dimensionsTotalPointsText(dim: Int, totalPoints: Long): String = {

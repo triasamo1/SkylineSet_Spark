@@ -87,8 +87,7 @@ object Task3 {
    */
 
   def topKBroadcastSkylines(data: RDD[List[Double]], top: Int, sc: SparkContext): Array[(List[Double], Long)] = {
-    val skylines = Task1.ALS(data).toList //find skyline points
-    val broadcastSkylines = sc.broadcast(skylines) //broadcast data rdd
+    val broadcastSkylines = sc.broadcast(Task1.ALS(data).toList) //broadcast skyline points
 
     data
       .mapPartitions(par => Task2.calculateDominanceScore(par, broadcastSkylines.value)) //finds dominance scores of the skyline points in each partition
@@ -108,12 +107,6 @@ object Task3 {
         if(Task1.dominates(point, nums)) totalPoints += 1
       })
     totalPoints
-  }
-
-  def countDominatedPoints(point: List[Double], points: Iterable[List[Double]]): Long = {
-    points
-      .filter(p => !p.equals(point))
-      .count(p => Task1.dominates(point, p))
   }
 
   def countDominatedPoints(point: List[Double], points: RDD[List[Double]]): Long = {
