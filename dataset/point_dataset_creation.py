@@ -10,22 +10,33 @@ import csv
 import argparse
 import numpy as np
 import os
+from sklearn.preprocessing import MinMaxScaler
 
-def save_to_file(data, file_name):
-    data = np.clip(data, 0.01, 1)
-    with open(output_name, 'w', newline='') as file:
-              np.savetxt(file_name, data, fmt='%.4f', delimiter=' ')
+def correlated(dim, n, anti=False):
+    mu = np.zeros(dim)
+    r = np.ones((dim, dim))
+    for i in range(dim):
+        r[i][i] = 1.5
+    l = np.random.multivariate_normal(mu, r, size=n)
+    for d in range(l.shape[1]):
+        col = l[:, d]
+        l[:, d] = (col - col.min()) / (col.max() - col.min())
+    if anti:
+        l[:, 0] = l[:, 0].max() - l[:, 0]
+    minmax = MinMaxScaler()
+    return minmax.fit_transform(np.array(l))
 
 def generate_data(data_distribution, total_points, dimensions, output_name):
   if data_distribution == "uniform":
-      data = np.random.uniform(0.05, 1, (total_points, dimensions))
+    data = np.random.uniform(0, 1, (total_points, dimensions))
   elif data_distribution == "normal":
-      data = np.random.normal(0.5, 0.12, (total_points, dimensions))
+    data = np.random.normal(0, 1, (total_points, dimensions))
+    minmax = MinMaxScaler()
+    data = minmax.fit_transform(np.array(data))
   elif data_distribution == "correlated":
-      data = np.array([np.linspace(0.15, 0.85, total_points) + np.random.normal(scale=0.05, size=total_points) for _ in range(dimensions)]).T
+    data = correlated(dimensions, total_points)
   elif data_distribution == "anticorrelated":
-      data = np.array([1 -np.linspace(0.2, 0.8, total_points) + np.random.normal(scale=0.05, size=total_points) if i == 0 else np.linspace(0.2, 0.8, total_points) + np.random.normal(scale=0.05, size=total_points) for i in range(dimensions)]).T
-  # data = np.clip(data, 0.0001, 1)
+    data = correlated(dimensions, total_points, True)
 
   folder_path = '../input/dimensions' + str(dimensions) +"/"
   os.makedirs(folder_path, exist_ok=True)
