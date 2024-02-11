@@ -1,5 +1,5 @@
 # M.Sc. Data and Web Science
-Student: Konstantina Gkritsa, Samoladas Triantafyllos  
+Students: Konstantina Gkritsa, Samoladas Triantafyllos  
 Course: Technologies for Big Data Analytics  
 University: Aristotle University of Thessaloniki  
  
