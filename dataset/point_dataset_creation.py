@@ -12,20 +12,6 @@ import numpy as np
 import os
 from sklearn.preprocessing import MinMaxScaler
 
-def correlated(dim, n, anti=False):
-    mu = np.zeros(dim)
-    r = np.ones((dim, dim))
-    for i in range(dim):
-        r[i][i] = 1.5
-    l = np.random.multivariate_normal(mu, r, size=n)
-    for d in range(l.shape[1]):
-        col = l[:, d]
-        l[:, d] = (col - col.min()) / (col.max() - col.min())
-    if anti:
-        l[:, 0] = l[:, 0].max() - l[:, 0]
-    minmax = MinMaxScaler()
-    return minmax.fit_transform(np.array(l))
-
 def generate_data(data_distribution, total_points, dimensions, output_name):
   if data_distribution == "uniform":
     data = np.random.uniform(0, 1, (total_points, dimensions))
@@ -34,9 +20,9 @@ def generate_data(data_distribution, total_points, dimensions, output_name):
     minmax = MinMaxScaler()
     data = minmax.fit_transform(np.array(data))
   elif data_distribution == "correlated":
-    data = correlated(dimensions, total_points)
+    data = np.array([np.linspace(0.15, 0.85, total_points) + np.random.normal(scale=0.05, size=total_points) for _ in range(dimensions)]).T
   elif data_distribution == "anticorrelated":
-    data = correlated(dimensions, total_points, True)
+    data = np.array([1 -np.linspace(0.2, 0.8, total_points) + np.random.normal(scale=0.05, size=total_points) if i == 0 else np.linspace(0.2, 0.8, total_points) + np.random.normal(scale=0.05, size=total_points) for i in range(dimensions)]).T
 
   folder_path = '../input/dimensions' + str(dimensions) +"/"
   os.makedirs(folder_path, exist_ok=True)
